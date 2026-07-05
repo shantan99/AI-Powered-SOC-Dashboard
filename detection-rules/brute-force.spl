@@ -1,0 +1,15 @@
+# Detection Rule: SSH Brute Force Attack
+# MITRE ATT&CK: T1110 — Brute Force
+# Description: Detects when an IP attempts more than 5 failed SSH logins within 60 seconds
+
+index=main sourcetype=linux_secure
+"Failed password" OR "Invalid user"
+| rex field=_raw "from (?P<src_ip>\d+\.\d+\.\d+\.\d+)"
+| bucket _time span=60s
+| stats count as failed_attempts by src_ip, _time
+| where failed_attempts > 5
+| eval severity=if(failed_attempts > 20, "CRITICAL", if(failed_attempts > 10, "HIGH", "MEDIUM"))
+| eval attack_type="SSH Brute Force"
+| eval mitre_technique="T1110"
+| table _time, src_ip, failed_attempts, severity, attack_type, mitre_technique
+| sort - failed_attempts

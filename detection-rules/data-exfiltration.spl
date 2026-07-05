@@ -1,0 +1,17 @@
+# Detection Rule: Data Exfiltration
+# MITRE ATT&CK: T1048 — Exfiltration Over Alternative Protocol
+# Description: Detects unusually large outbound data transfers from the Azure VM
+
+index=main sourcetype=firewall_logs OR sourcetype=network_traffic
+| where direction="outbound"
+| rex field=_raw "bytes_sent=(?P<bytes>\d+)"
+| eval mb_sent=round(bytes/1024/1024, 2)
+| bucket _time span=300s
+| stats sum(mb_sent) as total_mb_sent by src_ip, dest_ip, _time
+| where total_mb_sent > 500
+| eval severity=if(total_mb_sent > 2000, "CRITICAL", if(total_mb_sent > 1000, "HIGH", "MEDIUM"))
+| eval attack_type="Data Exfiltration"
+| eval mitre_technique="T1048"
+| eval description="Large outbound transfer detected — possible data theft"
+| table _time, src_ip, dest_ip, total_mb_sent, severity, attack_type, mitre_technique, description
+| sort - total_mb_sent

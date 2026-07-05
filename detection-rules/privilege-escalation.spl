@@ -1,0 +1,16 @@
+# Detection Rule: Privilege Escalation
+# MITRE ATT&CK: T1548 — Abuse Elevation Control Mechanism
+# Description: Detects sudo usage by non-standard user accounts
+
+index=main sourcetype=linux_secure
+"sudo" "TTY=" "USER=root"
+| rex field=_raw "USER=(?P<username>\w+)\s+;.*COMMAND=(?P<command>.+)"
+| where username != "admin" AND username != "root"
+| stats count as sudo_count, values(command) as commands_run by username
+| where sudo_count >= 1
+| eval severity="HIGH"
+| eval attack_type="Privilege Escalation"
+| eval mitre_technique="T1548"
+| eval description="Non-admin user ran sudo to gain root access"
+| table username, sudo_count, commands_run, severity, attack_type, mitre_technique, description
+| sort - sudo_count

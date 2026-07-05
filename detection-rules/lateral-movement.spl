@@ -1,0 +1,17 @@
+# Detection Rule: Lateral Movement
+# MITRE ATT&CK: T1021 — Remote Services
+# Description: Detects SSH logins between internal machines at unusual hours (outside 08:00-18:00)
+
+index=main sourcetype=linux_secure
+"Accepted password" OR "Accepted publickey"
+| rex field=_raw "from (?P<src_ip>\d+\.\d+\.\d+\.\d+)"
+| rex field=_raw "for (?P<username>\w+) from"
+| eval hour=strftime(_time, "%H")
+| eval is_internal=if(match(src_ip, "^10\.|^192\.168\.|^172\."), "yes", "no")
+| where is_internal="yes" AND (hour < 8 OR hour > 18)
+| stats count as login_count, values(src_ip) as source_ips by username, hour
+| eval severity="HIGH"
+| eval attack_type="Lateral Movement"
+| eval mitre_technique="T1021"
+| eval description="Internal SSH login at unusual hours — possible attacker moving between machines"
+| table username, hour, login_count, source_ips, severity, attack_type, mitre_technique, description

@@ -1,0 +1,15 @@
+# Detection Rule: Port Scanning / Network Reconnaissance
+# MITRE ATT&CK: T1046 — Network Service Discovery
+# Description: Detects rapid connection attempts to multiple ports from a single source IP
+
+index=main sourcetype=linux_secure OR sourcetype=firewall_logs
+| rex field=_raw "from (?P<src_ip>\d+\.\d+\.\d+\.\d+) port (?P<src_port>\d+)"
+| rex field=_raw "to port (?P<dst_port>\d+)"
+| bucket _time span=60s
+| stats dc(dst_port) as ports_scanned, values(dst_port) as port_list by src_ip, _time
+| where ports_scanned > 15
+| eval severity=if(ports_scanned > 100, "CRITICAL", if(ports_scanned > 50, "HIGH", "MEDIUM"))
+| eval attack_type="Port Scanning / Reconnaissance"
+| eval mitre_technique="T1046"
+| table _time, src_ip, ports_scanned, port_list, severity, attack_type, mitre_technique
+| sort - ports_scanned
