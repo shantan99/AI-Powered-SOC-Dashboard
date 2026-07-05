@@ -1,4 +1,4 @@
-# AI-Powered SOC Dashboard — FUTURE_CS_04
+# AI-Powered SOC Dashboard
 
 ## Project Overview
 
@@ -149,4 +149,4 @@ python python-automation/incident_response.py
 Aspiring SOC Analyst | Security Enthusiast  
 GitHub: [shantan99](https://github.com/shantan99)
 
-*Part of the FUTURE_CS series — hands-on cybersecurity projects building toward a SOC Analyst career.*
+*A hands-on cybersecurity project simulating a real-world SOC environment on Azure cloud.*
